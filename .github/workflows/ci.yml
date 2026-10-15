@@ -1,0 +1,33 @@
+# Each push to main: the TypeScript project's checks, through the
+# organization's workflow (thatsnotmynameio/github-actions' typescript.yml), on
+# Linux. It installs under the organization's pnpm policy, runs oxfmt, the type
+# check, oxlint and knip, then the Vitest tests with coverage; oxlint's
+# findings go to code scanning. The build of the project follows.
+# The push gives code scanning the analysis of main that a pull request's
+# oxlint alerts are compared against.
+# On a pull request the organization's ruleset runs the same workflow, as the
+# checks "tnmn.io: typescript (…)", with .github/typescript.yml, .oxlintrc.json,
+# .oxfmtrc.json, knip.json and tsconfig.json from the base commit: a change to
+# them applies once it merges. actionlint runs on every pull request the same
+# way, as the check "tnmn.io: actionlint".
+name: CI
+
+on:
+  push:
+    branches: [main]
+  workflow_dispatch:
+
+permissions: {}
+
+# Each commit gets a group of its own and is never cancelled.
+concurrency:
+  group: ${{ github.workflow }}-${{ github.sha }}
+  cancel-in-progress: false
+
+jobs:
+  typescript:
+    name: typescript
+    permissions:
+      contents: read
+      security-events: write # uploads oxlint's findings to code scanning
+    uses: thatsnotmynameio/github-actions/.github/workflows/typescript.yml@3be01ec1ff04e42a8492361aabee6def5cc73e15 # v0.3.0
